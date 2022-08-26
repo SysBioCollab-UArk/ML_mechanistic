@@ -1,13 +1,42 @@
 from pysb.examples.earm_1_0 import model
 from pysb.simulator import ScipyOdeSimulator
+from pysb.simulator import BngSimulator
 from read_data import *
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.interpolate import splrep, sproot
+
+
+# get time-to-death
+def get_ttd(tspan, cparp_traj):
+    cparp_traj_norm = cparp_traj / np.nanmax(cparp_traj)
+    st, sc, sk = splrep(tspan, cparp_traj_norm)
+    try:
+        t10 = sproot((st, sc - 0.10, sk))[0]
+        t90 = sproot((st, sc - 0.90, sk))[0]
+        t50 = sproot((st, sc - 0.50, sk))[0]
+    except IndexError:
+        t10 = 0
+        t90 = 0
+        t50 = 0
+    # time-to-death  = halfway point between 10 and 90%
+    td = (t10 + t90) / 2
+    return (td, t50, cparp_traj_norm[-1])
+
+# dose-response curve
+def drc(x, emax, ec, hh):
+    return emax + (1 - emax)/(1+(10**x/ec)**hh)
+
 
 # create the simulator
 tspan = np.linspace(0, 20000, 101)
 sim = ScipyOdeSimulator(model, tspan, verbose=True)
+# sim = BngSimulator(model, tspan, verbose=True)
+
+# for ic in model.initial_conditions:
+#     print(ic)
+# quit()
 
 # dictionary to map gene names in initial concentrations
 gene_map = {
@@ -32,9 +61,12 @@ gene_map = {
 
 # get division times for each cell line
 t_div = get_t_div(os.path.join('data', 'doubling_times.csv'))
+# for td in t_div.items():
+#     print(td)
+# quit()
 
 # loop over all cell lines
-for cell_line in t_div.keys():
+for cell_line in ['A549']:  # t_div.keys():
     print(cell_line)
 
     # set initial concentrations for each protein
@@ -47,8 +79,17 @@ for cell_line in t_div.keys():
             amount = round(model.parameters[p_name].value * gene_expr_ratio[gene])
             initials[sp] = amount
 
-    # run the simulation and plot time courses
+    # set initial ligand amount
+    idx = np.where(np.array([ic[1].name for ic in model.initial_conditions]) == 'L_0')[0][0]
+    sp = model.initial_conditions[idx][0]
+    initials[sp] = 3000  # 3000
+
+    # run the simulation and calculate time-to-death
     result = sim.run(initials=initials)
+    ttd = get_ttd(tspan, result.observables['CPARP_total'])
+    print(ttd)
+
+    # plot time courses
     plt.figure()
     plt.title(cell_line)
     for obs in model.observables:

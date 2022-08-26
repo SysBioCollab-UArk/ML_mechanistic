@@ -11,6 +11,7 @@ def get_gene_expr(infile, cell_line):
     ratio = {}  # { gene : ratio }
     for gene in gene_expr_data.dtype.names[1:]:
         val = gene_expr_data[gene][idx]
+        # values are in fold-change, so for negative values convert to -1/val
         ratio[gene] = val if val >= 0.0 else -1/val
     return ratio
 
