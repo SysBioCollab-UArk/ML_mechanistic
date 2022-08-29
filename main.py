@@ -24,6 +24,7 @@ def get_ttd(tspan, cparp_traj):
     td = (t10 + t90) / 2
     return (td, t50, cparp_traj_norm[-1])
 
+
 # dose-response curve
 def drc(x, emax, ec, hh):
     return emax + (1 - emax)/(1+(10**x/ec)**hh)
@@ -66,8 +67,9 @@ t_div = get_t_div(os.path.join('data', 'doubling_times.csv'))
 # quit()
 
 # loop over all cell lines
-for cell_line in ['A549']:  # t_div.keys():
+for cell_line in ['HeLa']:  # t_div.keys():
     print(cell_line)
+    # print(t_div[cell_line])
 
     # set initial concentrations for each protein
     gene_expr_ratio = get_gene_expr(os.path.join('data', 'normalized_ratios.csv'), cell_line)
@@ -93,7 +95,9 @@ for cell_line in ['A549']:  # t_div.keys():
     plt.figure()
     plt.title(cell_line)
     for obs in model.observables:
-        plt.plot(tspan, result.observables[obs.name], lw=2, label=obs.name)
+        plt.plot(tspan/3600., result.observables[obs.name], lw=2, label=obs.name)
+    plt.xlabel('time (h)')
+    plt.ylabel('amount (# molecules)')
     plt.legend(loc=0)
 
     plt.savefig(os.path.join('plots', '%s.png' % cell_line), format='png')
