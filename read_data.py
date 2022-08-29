@@ -15,7 +15,7 @@ def get_gene_expr(infile, cell_line):
         ratio[gene] = val if val >= 0.0 else -1/val
     return ratio
 
-def get_t_div(infile):
+def get_k_div(infile):
 
     # read in doubling times
     doubling_times_data = np.genfromtxt(infile, dtype=None, delimiter=',', names=True, encoding='UTF-8-sig')
@@ -24,15 +24,15 @@ def get_t_div(infile):
     cell_lines = np.unique(doubling_times_data['cell_line'])
 
     # extract doubling times and calculate division times (hr)
-    t_div = {}  # { cell_line: doubling_time }
+    k_div = {}  # { cell_line: doubling_time }
     for cell_line in cell_lines:
-        t_div[cell_line] = 0
+        k_div[cell_line] = 0
         n_samples = 0
         for d in doubling_times_data:
             if d['cell_line'] == cell_line:
-                t_div[cell_line] += d['doubling_time_hr']
+                k_div[cell_line] += d['doubling_time_hr']
                 n_samples += 1
-        t_div[cell_line] /= n_samples  # doubling time
-        t_div[cell_line] /= np.log(2)  # division time
+        k_div[cell_line] /= n_samples  # doubling time
+        k_div[cell_line] = np.log(2) / k_div[cell_line]  # division time
 
-    return t_div
+    return k_div

@@ -61,10 +61,10 @@ gene_map = {
 }
 
 # get division times for each cell line
-t_div = get_t_div(os.path.join('data', 'doubling_times.csv'))
-# for td in t_div.items():
-#     print(td)
-# quit()
+k_div = get_k_div(os.path.join('data', 'doubling_times.csv'))
+for kd in k_div.items():
+    print(kd)
+quit()
 
 # loop over all cell lines
 for cell_line in ['HeLa']:  # t_div.keys():
