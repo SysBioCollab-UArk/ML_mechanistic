@@ -1,13 +1,22 @@
 from scipy.stats import norm
 from scipy.special import erf
 
-from earm.lopez_embedded import model
+from pysb.examples.earm_1_0 import model
+#from earm.lopez_embedded import model
 import numpy as np
 import matplotlib.pyplot as plt
 from pysb.simulator import ScipyOdeSimulator
 from pysb import *
 import math
 from scipy.optimize import curve_fit
+
+
+#print (model.observables)
+
+
+#quit()
+
+
 
 ts = np.linspace(0, 40000, 201)
 
@@ -16,19 +25,23 @@ n = 15
 Kprolif = [0]*n
 TTD = [0]*n
 ProbL = [0]*n
-Start = 10**np.linspace(1, 7, n)
+Start = 10**np.linspace(.88, 7, n)
+
+#quit()
+
+
 Count = 0
 print(Start)
 while Count < n:
 
     sim = ScipyOdeSimulator(model, ts)
-    traj = sim.run(initials={model.monomers["L"](bf=None): Start[Count]})
+    traj = sim.run(initials={model.monomers["L"](b=None): Start[Count]})
 
     ######################################################################################################
     # print(traj.dataframe["cPARP"])
     P = 0
     Q = 0
-    for T in traj.dataframe["cPARP"]:
+    for T in traj.dataframe["CPARP_total"]:
         # print(T)
         # print(P)
         P = P + 1
@@ -61,6 +74,11 @@ while Count < n:
     Death = TOD     # Time of death
     Life = 3000   # Avg time cell reproduction
     LDis = 1000      # standard distrabution of Life
+    K_Div = 0.017503716680806698/3600
+
+
+
+
 
     domain = ts        # timeScale
     x = domain
@@ -76,12 +94,19 @@ while Count < n:
     w = np.sign(abs(Death-Life)/((2**.5)*LDis))
     q = erf((Death-Life)/((2**.5)*LDis))
 
-    Prob = .5*(1+w * q)
+    #Prob = .5*(1+w * q)
 
+    Prob = 1-np.exp(-K_Div*Death)
     print("Prob of Life =", format(Prob*100, ".2f"), "%")
 
     ProbL[Count] = Prob
-    Kprolif[Count] = (1 / Life) * ProbL[Count] - (1. / TTD[Count]) * (1. - ProbL[Count])
+    #Kprolif[Count] = (1 / Life) * ProbL[Count] - (1. / TTD[Count]) * (1. - ProbL[Count])
+
+    Kprolif[Count] = K_Div * ProbL[Count] - (1. / TTD[Count]) * (1. - ProbL[Count])
+
+
+
+
     Count += 1
 
 print("ProbL of Life =", ProbL)
@@ -101,7 +126,7 @@ plt.figure()
 Dip = np.array(Kprolif)/np.log(2)
 LogConc = np.log10(np.array(Start))
 
-plt.plot(LogConc, Dip/Dip[0], "o-", lw=2)
+plt.plot(LogConc, Dip/(K_Div/np.log(2)), "o-", lw=2)
 
 # DipRate###
 # plt.show()
@@ -113,7 +138,7 @@ def func(x, Emax, EC, h):
     return Emax + (1 - Emax)/(1+(10**x/EC)**h)
 
 
-popt, pcov = curve_fit(func, LogConc, Dip/Dip[0], maxfev=50000)
+popt, pcov = curve_fit(func, LogConc, Dip/(K_Div/np.log(2)), maxfev=50000)
 Emax = popt[0]
 
 EC = popt[1]
