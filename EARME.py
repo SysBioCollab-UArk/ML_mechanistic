@@ -18,37 +18,51 @@ from scipy.optimize import curve_fit
 
 
 
-ts = np.linspace(0, 40000, 201)
+#ts = np.linspace(0, 40000, 201)
 
 n = 15
 
 Kprolif = [0]*n
 TTD = [0]*n
 ProbL = [0]*n
-Start = 10**np.linspace(-2, 6, n)
+Start = 10**np.linspace(-6, 8, n)
 K_Div = 0.017503716680806698/3600
 #quit()
 
 TODT= 0
 Count = 0
 print(Start)
+
+
+ts = np.linspace(0, 2e5, 1001)
+
+#for init in model.initial_conditions:
+ #   print (init)
+#quit()
+
+
 while Count < n:
 
     sim = ScipyOdeSimulator(model, ts)
     traj = sim.run(initials={model.monomers["L"](b=None): Start[Count]})
 
     ######################################################################################################
-    # print(traj.dataframe["cPARP"])
+    #print(traj.dataframe["CPARP_total"])
+
+    #plt.plot(traj.dataframe["CPARP_total"])
+
+    #plt.show()
+   # quit()
     P = 0
     Q = 0
     for T in traj.dataframe["CPARP_total"]:
         # print(T)
         # print(P)
         P = P + 1
-        if T < 500000:
+        if T < model.parameters["PARP_0"].value/2:
             TODF = T
             D = P - 1
-        if T > 500000 and Q == 0:
+        if T > model.parameters["PARP_0"].value/2 and Q == 0:
             TODT = T
             Q = Q + 1
 
@@ -62,7 +76,7 @@ while Count < n:
     Yb = D + 1
     Xa = TODF
     Xb = TODT
-    X = 500000
+    X = model.parameters["PARP_0"].value/2
     Y = 1
     Y = Ya + (X - Xa) * ((Yb - Ya) / (Xb - Xa))
     print("Y =", Y)
@@ -80,7 +94,8 @@ while Count < n:
     Prob = 1-np.exp(-K_Div*Death)
 
     if TODT == 0:            # if Cparp does not reach 50% there is 100% prob of life
-       Prob = 1
+        print("ERROR: CPARP did not reach 50% of maximum")
+        quit()
 
 
 
@@ -113,7 +128,7 @@ plt.figure()
 Dip = np.array(Kprolif)/np.log(2)
 LogConc = np.log10(np.array(Start))
 
-plt.plot(LogConc, Dip/(K_Div/np.log(2)), "o-", lw=2)
+plt.plot(LogConc, Dip/(K_Div/np.log(2)), "o", lw=2)
 
 # DipRate###
 
@@ -132,7 +147,7 @@ h = popt[2]
 
 Eo = 1
 Ei = Emax + (Eo - Emax)/(1+(10**LogConc/EC)**h)
-plt.plot(LogConc, Ei, "s")
+plt.plot(LogConc, Ei, "-", lw = 2)
 
 plt.xlabel(r'log$_{10}$ conc')
 plt.ylabel(r'DIP/DIP$_0$')
