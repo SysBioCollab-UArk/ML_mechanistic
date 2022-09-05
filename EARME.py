@@ -25,11 +25,11 @@ n = 15
 Kprolif = [0]*n
 TTD = [0]*n
 ProbL = [0]*n
-Start = 10**np.linspace(.88, 7, n)
-
+Start = 10**np.linspace(-2, 6, n)
+K_Div = 0.017503716680806698/3600
 #quit()
 
-
+TODT= 0
 Count = 0
 print(Start)
 while Count < n:
@@ -72,36 +72,21 @@ while Count < n:
 
     TTD[Count] = TOD
     Death = TOD     # Time of death
-    Life = 3000   # Avg time cell reproduction
-    LDis = 1000      # standard distrabution of Life
-    K_Div = 0.017503716680806698/3600
-
-
-
-
-
     domain = ts        # timeScale
     x = domain
 
-    # ###########Z-Score Calculation#######################
-
-    Zscore = ((Death-Life)/LDis)
-
-    # print("Zscore =", Zscore)
-
-    ####
-
-    w = np.sign(abs(Death-Life)/((2**.5)*LDis))
-    q = erf((Death-Life)/((2**.5)*LDis))
-
-    #Prob = .5*(1+w * q)
+    ##############################################################################################################
 
     Prob = 1-np.exp(-K_Div*Death)
-    print("Prob of Life =", format(Prob*100, ".2f"), "%")
+
+    if TODT == 0:            # if Cparp does not reach 50% there is 100% prob of life
+       Prob = 1
+
+
 
     ProbL[Count] = Prob
-    #Kprolif[Count] = (1 / Life) * ProbL[Count] - (1. / TTD[Count]) * (1. - ProbL[Count])
 
+    print("Prob of Life =", format(Prob * 100, ".2f"), "%")
     Kprolif[Count] = K_Div * ProbL[Count] - (1. / TTD[Count]) * (1. - ProbL[Count])
 
 
@@ -111,6 +96,8 @@ while Count < n:
 
 print("ProbL of Life =", ProbL)
 print("Kprolif =", Kprolif)
+
+
 
 
 # DipRate###
@@ -129,8 +116,7 @@ LogConc = np.log10(np.array(Start))
 plt.plot(LogConc, Dip/(K_Div/np.log(2)), "o-", lw=2)
 
 # DipRate###
-# plt.show()
-# quit()
+
 # CurveFit###     #of dip rate
 
 
@@ -154,24 +140,3 @@ plt.ylabel(r'DIP/DIP$_0$')
 plt.show()
 
 # CurveFit###
-
-# quit()
-
-# BellCurve###
-# plt.figure()
-#
-# NORM = norm.pdf(domain,Life,LDis)   # normal distrabution with mean=first number standared deviation=second
-#
-# plt.plot(domain, (NORM * 1000000000))
-#
-# plt.plot(traj.dataframe["cPARP"], label='cPARP')
-# plt.title('standard normal')
-# plt.xlabel('value')
-# plt.ylabel('Density')
-# plt.axvline(Death, color='g')
-# plt.axhline(0, color="black")
-# plt.fill_between(domain, NORM * 1000000000, where = [(x > 0) and (x <= Death) for x in x] ,color="r")
-#
-#
-# plt.show()
-# BellCurve###
