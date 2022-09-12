@@ -136,7 +136,8 @@ plt.plot(LogConc, Dip/(K_Div/np.log(2)), "o", lw=2)
 
 
 def func(x, Emax, EC, h):
-    return Emax + (1 - Emax)/(1+(10**x/EC)**h)
+    E0 = 1
+    return Emax + (E0 - Emax)/(1+(10**x/EC)**h)
 
 
 popt, pcov = curve_fit(func, LogConc, Dip/(K_Div/np.log(2)), maxfev=50000)
