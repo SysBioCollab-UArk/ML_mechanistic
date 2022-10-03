@@ -139,8 +139,9 @@ plt.plot(LogConc, Scaled, "o", lw=2)
 # CurveFit###     #of dip rate
 
 
-def func(x, Emax, EC, h):
-    return Emax + (1 - Emax)/(1+(10**x/EC)**h)
+def func(x, emax, ec, h):
+    e0 = 1
+    return emax + (e0 - emax)/(1+(10**x/ec)**h)
 
 
 popt, pcov = curve_fit(func, LogConc, Dip/(K_Div/np.log(2)), maxfev=50000)
