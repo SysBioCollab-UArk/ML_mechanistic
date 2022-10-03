@@ -128,7 +128,11 @@ plt.figure()
 Dip = np.array(Kprolif)/np.log(2)
 LogConc = np.log10(np.array(Start))
 
-plt.plot(LogConc, Dip/(K_Div/np.log(2)), "o", lw=2)
+Direct = Dip/(K_Div/np.log(2))
+Scaled = (Direct-np.min(Direct))/(np.max(Direct)-np.min(Direct))
+
+#plt.plot(LogConc, Direct, "o", lw=2)
+plt.plot(LogConc, Scaled, "o", lw=2)
 
 # DipRate###
 
@@ -146,12 +150,62 @@ EC = popt[1]
 h = popt[2]
 
 Eo = 1
-Ei = Emax + (Eo - Emax)/(1+(10**LogConc/EC)**h)
+#Ei = Emax + (Eo - Emax)/(1+(10**LogConc/EC)**h)            #direct effect
+Ei = (EC**h)/(EC**h+(10**LogConc)**h)                       #scaled
 plt.plot(LogConc, Ei, "-", lw = 2)
 
 plt.xlabel(r'log$_{10}$ conc')
 plt.ylabel(r'DIP/DIP$_0$')
 
-plt.show()
-
+plt.show()############################################################################################################################
+#plt.savefig
 # CurveFit###
+
+# Debug###
+#print("this is it ",type(Ei))
+#print("this is it ",type(LogConc))
+#print(np.size(Ei))
+#print(np.size(LogConc))
+#print(Ei)
+#print(LogConc)
+#print(h)
+#print(EC)
+#print(Emax)
+# Debug###
+
+# Trapazoid for AUC###
+Eif = np.max(Ei)
+Eis = np.min(Ei)
+Lcf = np.max(LogConc)
+Lcs = np.min(LogConc)
+
+#print(np.max(Ei),np.min(Ei),np.max(LogConc),np.min(LogConc))
+
+Area = (Eif-Eis)*(Lcf-Lcs)                                         #total area
+print("Area is = ", Area)
+TrapArea=0
+Count=0
+while Count < (n-1):
+
+    Trap = (Ei[Count]+Ei[Count+1])/2-Eis
+    TrapArea=TrapArea+Trap
+    Count=Count+1
+
+print("TrapArea is ",TrapArea)
+
+# Trapazoid for AUC###
+
+dmin=10**Lcs
+dmax=10**Lcf
+
+
+
+
+AUC=(1/h)*np.log10(abs((EC**h+dmin**h)/dmin**h*(dmax**h/(EC**h+dmax**h))))
+#AUCA=1/h*np.log10(abs((EC**h+dmin**h)/dmin**h))
+AA=(1/h)*np.log10(abs((EC**h+dmax**h)/(EC**h+dmin**h)))
+#AA=Area-AUC
+
+print("Area under curve is ",AUC)
+print("Activity Area is ",AA)
+#print (AUCA)
