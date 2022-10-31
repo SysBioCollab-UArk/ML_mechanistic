@@ -10,44 +10,38 @@ from pysb import *
 import math
 from scipy.optimize import curve_fit
 
+import read_data
+from read_data import get_k_div
 
-Cell_double_times=np.array([18,37,36,27,22,23.9,27,27,22.9,28,40,47.5,55,96,52.5,60,23.7,48,42,50,43.71,72.5,16,28,40,31.2,48,47,19.6,35,43.2,80,31.2,25.3,24.4,25.4,50,38,56.47,31.56,33,29,27.9,40,36,25.34,27.1,25,50,25,40,34.7,30,60,60,33.5,65,37,65.8,80,62.4,65,26,42.5,45.6,30.5])
+#Cell_div_times=read_data.get_k_div("data/doubling_times.csv")
 
-CellAA = [0]*len(Cell_double_times)
-CellIC = [0]*len(Cell_double_times)
 
+#print(Cell_div_times)
+#quit()
+
+
+
+Cell_div_times=np.array([0.02469112365984261,0.013524823035316005,0.009973340727481227, 0.01933464938800405, 0.015322684707684294, 0.009560650766344074,0.024755256448569473,0.017503716680806698,0.0204669443078724,0.016681350442654508,0.021061901566695386,0.02161132344294155,0.016675553662228032 ,0.013119504994825462,0.011375500775053806,0.011108127893588867,0.015576341136178546,0.018216745875425634])
+
+CellAA = [0]*len(Cell_div_times)
+CellIC = [0]*len(Cell_div_times)
+vCellAA = [0]*len(Cell_div_times)
+vCellIC = [0]*len(Cell_div_times)
+ts = np.linspace(0, 72*60*60, 1001)
 cell = 0
-
-while cell < len(Cell_double_times):
-
-
-
-
-
-
-
-
-
-
-
-
+sim = ScipyOdeSimulator(model, ts)
+while cell < len(Cell_div_times):
 
     #print (model.observables)
 
 
-    #quit()
-
-
-
-    #ts = np.linspace(0, 40000, 201)
-
-    n = 15
+    n = 30
 
     Kprolif = [0]*n
     TTD = [0]*n
     ProbL = [0]*n
-    Start = 10**np.linspace(-6, 8, n)
-    K_Div = np.log(2)/Cell_double_times[cell]/3600
+    Start = 10**np.linspace(-15, 8, n)
+    K_Div = Cell_div_times[cell]/3600
     #quit()
 
     TODT= 0
@@ -55,16 +49,9 @@ while cell < len(Cell_double_times):
     print(Start)
 
 
-    ts = np.linspace(0, 259200, 1001)
-
-    #for init in model.initial_conditions:
-     #   print (init)
-    #quit()
-
-
     while Count < n:
 
-        sim = ScipyOdeSimulator(model, ts)
+
         traj = sim.run(initials={model.monomers["L"](b=None): Start[Count]})
 
         ######################################################################################################
@@ -115,35 +102,41 @@ while cell < len(Cell_double_times):
         Prob = 1-np.exp(-K_Div*Death)
 
         if TODT == 0:            # if Cparp does not reach 50% there is 100% prob of life
-            print("ERROR: CPARP did not reach 50% of maximum")
-            quit()
+            print("WARNING: CPARP did not reach 50% of maximum")
+            Kprolif[Count] = K_Div
+            #quit()
+        else:
 
+            ProbL[Count] = Prob
 
-
-        ProbL[Count] = Prob
-
-        print("Prob of Life =", format(Prob * 100, ".2f"), "%")
-        Kprolif[Count] = K_Div * ProbL[Count] - (1. / TTD[Count]) * (1. - ProbL[Count])
-
-
-
+            print("Prob of Life =", format(Prob * 100, ".2f"), "%")
+            Kprolif[Count] = K_Div * ProbL[Count] - (1. / TTD[Count]) * (1. - ProbL[Count])
 
         Count += 1
 
     print("ProbL of Life =", ProbL)
     print("Kprolif =", Kprolif)
 
-
-
-
     # DipRate###
-
+    plt.subplot(1, 2, 1)
+    plt.title("linear_tc")
+    plt.plot(ts/3600, np.exp(ts * K_Div), label="Kprolif = %g" % K_Div)
     for k in Kprolif:
-        plt.plot(ts, np.exp(ts*k), label="Kprolif = %g" % k)
-    plt.xlabel('time')
+        plt.plot(ts/3600, np.exp(ts * k), label="Kprolif = %g" % k)
+    plt.xlabel('time (hr)')
     plt.ylabel('cell count')
-    plt.legend(loc="best")
-    plt.yscale("log", base=2)
+    #plt.legend(loc="best")
+
+    plt.subplot(1, 2, 2)
+    plt.title("log_tc")
+    plt.plot(ts/3600,np.log2(np.exp(ts * K_Div)), label="Kprolif = %g" % K_Div)
+    for k in Kprolif:
+        plt.plot(ts/3600, np.log2(np.exp(ts*k)), label="Kprolif = %g" % k)
+    plt.xlabel('time (hr)')
+    plt.ylabel('cell count')
+    #plt.legend(loc="best")
+
+    #plt.yscale("log", base=2)
 
     plt.figure()
     Dip = np.array(Kprolif)/np.log(2)
@@ -153,9 +146,19 @@ while cell < len(Cell_double_times):
     Scaled = (Direct-np.min(Direct))/(np.max(Direct)-np.min(Direct))
 
     #plt.plot(LogConc, Direct, "o", lw=2)
-    plt.plot(LogConc, Scaled, "o", lw=2)
+    plt.plot(LogConc, Scaled, "o", lw=2, label="dip_rate")
+
 
     # DipRate###
+
+    # Viability
+    ctrl_72h = np.exp(K_Div*72*3600)
+    viability = np.exp(np.array(Kprolif)*72*3600)/ctrl_72h
+    plt.plot(LogConc, viability, "s", lw=2, label="viability 72h")
+    plt.legend(loc=0)
+
+
+
 
     # CurveFit###     #of dip rate
 
@@ -164,20 +167,28 @@ while cell < len(Cell_double_times):
         e0 = 1
         return emax + (e0 - emax)/(1+(10**x/ec)**h)
 
-
+    #this is the dip rate dose response fit
     popt, pcov = curve_fit(func, LogConc, Dip/(K_Div/np.log(2)), maxfev=50000)
     Emax = popt[0]
-
     EC = popt[1]
     h = popt[2]
-
     Eo = 1
     #Ei = Emax + (Eo - Emax)/(1+(10**LogConc/EC)**h)            #direct effect
     Ei = (EC**h)/(EC**h+(10**LogConc)**h)                       #scaled
     plt.plot(LogConc, Ei, "-", lw = 2)
 
+
+    # this is the viability dose response fit
+    popt, pcov = curve_fit(func, LogConc, viability, maxfev=500000)
+    vEmax = popt[0]
+    vEC = popt[1]
+    vh = popt[2]
+    vEo = 1
+    vEi = (vEC ** vh) / (vEC ** vh + (10 ** LogConc) ** vh)
+    plt.plot(LogConc, vEi, "-", lw=2)
+
     plt.xlabel(r'log$_{10}$ conc')
-    plt.ylabel(r'DIP/DIP$_0$')
+    plt.ylabel("relative effect")
 
     #plt.show()############################################################################################################################
     #plt.savefig
@@ -241,6 +252,62 @@ while cell < len(Cell_double_times):
     CellIC[cell]=IC
 
     # Equation Analysis ###
+
+
+
+
+    # Trapazoid for AUC###
+    vEif = np.max(vEi)
+    vEis = np.min(vEi)
+
+
+
+    dmin=10**Lcs
+    dmax=10**Lcf
+
+    vIC=vEC*(1/(1-2*vEis/vEif))**(1/vh)
+
+    print("vEC is ", vEC)
+    print("vIC is ", vIC)
+    print("vEif is ", vEif)
+    print("vEis is ", vEis)
+    print("vh is ", vh)
+
+    vAUC=(1/vh)*np.log10(abs((vEC**vh+dmin**vh)/dmin**vh*(dmax**vh/(vEC**vh+dmax**vh))))
+    #AUCA=1/h*np.log10(abs((EC**h+dmin**h)/dmin**h))
+    vAA=(1/vh)*np.log10(abs((vEC**vh+dmax**vh)/(vEC**vh+dmin**vh)))
+    #AA=Area-AUC
+
+    print("vArea under curve is ",vAUC)
+    print("vActivity Area is ",vAA)
+    #print (AUCA)
+    #plt.show()
+
+    vCellAA[cell]=vAA
+    vCellIC[cell]=vIC
+
+    # Equation Analysis ###
     cell=cell+1
+print("vAA is ", vCellAA)
+print("vIC is ", vCellIC)
 print("AA is ", CellAA)
 print("IC is ", CellIC)
+
+
+vCellAA = [x - vCellAA[0] for x in vCellAA]
+vCellIC = [x - vCellIC[0] for x in vCellIC]
+CellAA = [x - CellAA[0] for x in CellAA]
+CellIC = [x - CellIC[0] for x in CellIC]
+
+plt.figure()
+plt.title("Standardized Metrics")
+plt.plot(np.linspace(0, cell, cell),vCellAA,"o", lw = 2, label="vAA")
+plt.plot(np.linspace(0, cell, cell),vCellIC,"o", lw = 2, label="vIC")
+plt.plot(np.linspace(0, cell, cell),CellAA,"o", lw = 2, label="AA")
+plt.plot(np.linspace(0, cell, cell),CellIC,"o", lw = 2, label="IC")
+plt.xlabel('cell line')
+plt.ylabel('change in value')
+plt.legend(loc="best")
+
+
+plt.show()
