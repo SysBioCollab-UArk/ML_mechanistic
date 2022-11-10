@@ -13,10 +13,11 @@ from scipy.optimize import curve_fit
 import read_data
 from read_data import get_k_div
 
-#Cell_div_times=read_data.get_k_div("data/doubling_times.csv")
+Cell_div_times=list(read_data.get_k_div("data/doubling_times.csv").values())
+Cell_key=list(read_data.get_k_div("data/doubling_times.csv").keys())
 
-
-#print(Cell_div_times)
+print(Cell_key)
+print(Cell_div_times)
 #quit()
 
 
@@ -301,10 +302,14 @@ CellIC = [x - CellIC[0] for x in CellIC]
 
 plt.figure()
 plt.title("Standardized Metrics")
-plt.plot(np.linspace(0, cell, cell),vCellAA,"o", lw = 2, label="vAA")
-plt.plot(np.linspace(0, cell, cell),vCellIC,"o", lw = 2, label="vIC")
-plt.plot(np.linspace(0, cell, cell),CellAA,"o", lw = 2, label="AA")
-plt.plot(np.linspace(0, cell, cell),CellIC,"o", lw = 2, label="IC")
+#plt.plot(np.linspace(0, cell, cell),vCellAA,"o", lw = 2, label="vAA")
+#plt.plot(np.linspace(0, cell, cell),vCellIC,"o", lw = 2, label="vIC")
+#plt.plot(np.linspace(0, cell, cell),CellAA,"o", lw = 2, label="AA")
+#plt.plot(np.linspace(0, cell, cell),CellIC,"o", lw = 2, label="IC")
+plt.plot(Cell_div_times,vCellAA,"o", lw = 2, label="vAA")
+plt.plot(Cell_div_times,vCellIC,"o", lw = 2, label="vIC")
+plt.plot(Cell_div_times,CellAA,"o", lw = 2, label="AA")
+plt.plot(Cell_div_times,CellIC,"o", lw = 2, label="IC")
 plt.xlabel('cell line')
 plt.ylabel('change in value')
 plt.legend(loc="best")
