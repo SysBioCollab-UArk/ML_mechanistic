@@ -9,9 +9,32 @@ from pysb.simulator import ScipyOdeSimulator
 from pysb import *
 import math
 from scipy.optimize import curve_fit
-
+import os
 import read_data
+from copy import deepcopy
 from read_data import get_k_div
+
+# dictionary to map gene names in initial concentrations
+gene_map = {
+    'BAX': ['Bax_0'],
+    'BCL2': ['Bcl2_0', 'Bcl2c_0'],
+    'BID': ['Bid_0'],
+    'CYCS': ['mCytoC_0'],
+    'FADD': ['Bcl2_0'],
+    'CASP3': ['pC3_0'],
+    'CASP6': ['pC6_0'],
+    'CASP8': ['pC8_0'],
+    'CASP9': ['pC9_0'],
+    'CFLAR': ['flip_0'],  # FLIP
+    'XIAP': ['XIAP_0'],
+    'DIABLO': ['mSmac_0'],  # SMAC
+    'TNFRSF10A': [],  # DR4
+    'TNFRSF10B': ['pR_0'],  # DR5
+    'PARP1': ['PARP_0'],
+    'APAF1': ['Apaf_0'],
+    'BFAR': ['BAR_0']
+}
+
 
 Cell_div_times=list(read_data.get_k_div("data/doubling_times.csv").values())
 Cell_key=list(read_data.get_k_div("data/doubling_times.csv").keys())
@@ -20,18 +43,44 @@ print(Cell_key)
 print(Cell_div_times)
 #quit()
 
-
-
-Cell_div_times=np.array([0.02469112365984261,0.013524823035316005,0.009973340727481227, 0.01933464938800405, 0.015322684707684294, 0.009560650766344074,0.024755256448569473,0.017503716680806698,0.0204669443078724,0.016681350442654508,0.021061901566695386,0.02161132344294155,0.016675553662228032 ,0.013119504994825462,0.011375500775053806,0.011108127893588867,0.015576341136178546,0.018216745875425634])
-
 CellAA = [0]*len(Cell_div_times)
 CellIC = [0]*len(Cell_div_times)
 vCellAA = [0]*len(Cell_div_times)
 vCellIC = [0]*len(Cell_div_times)
 ts = np.linspace(0, 72*60*60, 1001)
 cell = 0
-sim = ScipyOdeSimulator(model, ts)
-while cell < len(Cell_div_times):
+
+# loop over all cell lines
+for cell_line in Cell_key:
+    print(cell_line)
+    # print(t_div[cell_line])
+
+    # set initial concentrations for each protein
+
+    gene_expr_ratio = read_data.get_gene_expr(os.path.join('data', 'normalized_ratios.csv'), cell_line)
+    initials = {}
+    for gene in gene_map.keys():
+        for p_name in gene_map[gene]:
+            idx = np.where(np.array([ic[1].name for ic in model.initial_conditions]) == p_name)[0][0]
+            sp = model.initial_conditions[idx][0]
+            amount = round(model.parameters[p_name].value * gene_expr_ratio[gene])
+            initials[sp] = amount
+            print(amount)
+            #quit()
+
+
+
+
+
+
+
+
+
+    #Cell_div_times=np.array([0.02469112365984261,0.013524823035316005,0.009973340727481227, 0.01933464938800405, 0.015322684707684294, 0.009560650766344074,0.024755256448569473,0.017503716680806698,0.0204669443078724,0.016681350442654508,0.021061901566695386,0.02161132344294155,0.016675553662228032 ,0.013119504994825462,0.011375500775053806,0.011108127893588867,0.015576341136178546,0.018216745875425634])
+
+
+    sim = ScipyOdeSimulator(model, ts)
+
 
     #print (model.observables)
 
@@ -45,16 +94,30 @@ while cell < len(Cell_div_times):
     K_Div = Cell_div_times[cell]/3600
     #quit()
 
-    TODT= 0
+
     Count = 0
     print(Start)
 
 
     while Count < n:
+        #newinitial = deepcopy(initials)
+        print("Count",Count)
+        idx = np.where(np.array([ic[1].name for ic in model.initial_conditions]) == "L_0")[0][0]
+        sp = model.initial_conditions[idx][0]
 
 
-        traj = sim.run(initials={model.monomers["L"](b=None): Start[Count]})
+        initials[sp] = Start[Count] #if Count==0 else np.array([Start[Count]])
 
+        #initials[model.monomers["L"](b=None)] = Start[Count] if Count == 0 else np.array([Start[Count]])
+        print("start count",Start[Count])
+        print(initials)
+
+        traj = sim.run(initials= initials)
+
+        TODT = 0
+
+        #print(Start)
+        #quit()
         ######################################################################################################
         #print(traj.dataframe["CPARP_total"])
 
@@ -64,6 +127,7 @@ while cell < len(Cell_div_times):
        # quit()
         P = 0
         Q = 0
+        print(max(traj.dataframe["CPARP_total"]))
         for T in traj.dataframe["CPARP_total"]:
             # print(T)
             # print(P)
@@ -117,9 +181,10 @@ while cell < len(Cell_div_times):
 
     print("ProbL of Life =", ProbL)
     print("Kprolif =", Kprolif)
-
+    if cell % 3 == 0:
+        plt.figure()
     # DipRate###
-    plt.subplot(1, 2, 1)
+    plt.subplot(3, 3, cell%3*3+1)
     plt.title("linear_tc")
     plt.plot(ts/3600, np.exp(ts * K_Div), label="Kprolif = %g" % K_Div)
     for k in Kprolif:
@@ -128,7 +193,7 @@ while cell < len(Cell_div_times):
     plt.ylabel('cell count')
     #plt.legend(loc="best")
 
-    plt.subplot(1, 2, 2)
+    plt.subplot(3, 3, cell%3*3+2)
     plt.title("log_tc")
     plt.plot(ts/3600,np.log2(np.exp(ts * K_Div)), label="Kprolif = %g" % K_Div)
     for k in Kprolif:
@@ -139,7 +204,7 @@ while cell < len(Cell_div_times):
 
     #plt.yscale("log", base=2)
 
-    plt.figure()
+    plt.subplot(3,3, cell%3*3+3)
     Dip = np.array(Kprolif)/np.log(2)
     LogConc = np.log10(np.array(Start))
 
@@ -273,6 +338,7 @@ while cell < len(Cell_div_times):
     print("vEif is ", vEif)
     print("vEis is ", vEis)
     print("vh is ", vh)
+    print("cell is ", cell)
 
     vAUC=(1/vh)*np.log10(abs((vEC**vh+dmin**vh)/dmin**vh*(dmax**vh/(vEC**vh+dmax**vh))))
     #AUCA=1/h*np.log10(abs((EC**h+dmin**h)/dmin**h))
@@ -286,30 +352,68 @@ while cell < len(Cell_div_times):
 
     vCellAA[cell]=vAA
     vCellIC[cell]=vIC
+    #plt.show()
+    #quit()#########################################################################
 
     # Equation Analysis ###
     cell=cell+1
+
 print("vAA is ", vCellAA)
 print("vIC is ", vCellIC)
 print("AA is ", CellAA)
 print("IC is ", CellIC)
 
+print(type(vCellAA))
 
-vCellAA = [x - vCellAA[0] for x in vCellAA]
-vCellIC = [x - vCellIC[0] for x in vCellIC]
-CellAA = [x - CellAA[0] for x in CellAA]
-CellIC = [x - CellIC[0] for x in CellIC]
+vCellAA = np.array(vCellAA)
+vCellIC = np.array(vCellIC)
+CellAA = np.array(CellAA)
+CellIC = np.array(CellIC)
 
 plt.figure()
-plt.title("Standardized Metrics")
+plt.title("Activity Area")
+#plt.plot(np.linspace(0, cell, cell),vCellAA,"o", lw = 2, label="vAA")
+#plt.plot(np.linspace(0, cell, cell),vCellIC,"o", lw = 2, label="vIC")
+#plt.plot(np.linspace(0, cell, cell),CellAA,"o", lw = 2, label="AA")
+#plt.plot(np.linspace(0, cell, cell),CellIC,"o", lw = 2, label="IC")
+plt.plot(np.linspace(0, 18, 18),vCellAA,"o", lw = 2, label="vAA")
+plt.plot(np.linspace(0, 18, 18),CellAA,"o", lw = 2, label="AA")
+plt.xlabel('cell line doubling time')
+plt.ylabel('value')
+plt.legend(loc="best")
+plt.figure()
+plt.title("IC_50")
+plt.plot(np.linspace(0, 18, 18),np.log10(vCellIC),"o", lw = 2, label="vIC")
+plt.plot(np.linspace(0, 18, 18),np.log10(CellIC),"o", lw = 2, label="IC")
+plt.xlabel('cell line doubling time')
+plt.ylabel('log_10 value')
+plt.legend(loc="best")
+
+plt.figure()
+plt.title("Activity Area")
 #plt.plot(np.linspace(0, cell, cell),vCellAA,"o", lw = 2, label="vAA")
 #plt.plot(np.linspace(0, cell, cell),vCellIC,"o", lw = 2, label="vIC")
 #plt.plot(np.linspace(0, cell, cell),CellAA,"o", lw = 2, label="AA")
 #plt.plot(np.linspace(0, cell, cell),CellIC,"o", lw = 2, label="IC")
 plt.plot(Cell_div_times,vCellAA,"o", lw = 2, label="vAA")
-plt.plot(Cell_div_times,vCellIC,"o", lw = 2, label="vIC")
 plt.plot(Cell_div_times,CellAA,"o", lw = 2, label="AA")
-plt.plot(Cell_div_times,CellIC,"o", lw = 2, label="IC")
+plt.xlabel('cell line doubling time')
+plt.ylabel('value')
+plt.legend(loc="best")
+plt.figure()
+plt.title("IC_50")
+plt.plot(Cell_div_times,np.log10(vCellIC),"o", lw = 2, label="vIC")
+plt.plot(Cell_div_times,np.log10(CellIC),"o", lw = 2, label="IC")
+plt.xlabel('cell line doubling time')
+plt.ylabel('log_10 value')
+plt.legend(loc="best")
+
+plt.figure()
+
+plt.plot(Cell_div_times,vCellAA-vCellAA[0],"o", lw = 2, label="vAA")
+plt.plot(Cell_div_times,np.log10(vCellIC)-np.log10(vCellIC[0]),"o", lw = 2, label="vIC")
+plt.plot(Cell_div_times,CellAA-CellAA[0],"o", lw = 2, label="AA")
+plt.plot(Cell_div_times,np.log10(CellIC)-np.log10(CellIC[0]),"o", lw = 2, label="IC")
 plt.xlabel('cell line')
 plt.ylabel('change in value')
 plt.legend(loc="best")
