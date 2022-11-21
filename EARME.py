@@ -182,10 +182,11 @@ for cell_line in Cell_key:
     print("ProbL of Life =", ProbL)
     print("Kprolif =", Kprolif)
     if cell % 3 == 0:
+        plt.savefig("Viability_Dip_%d.pdf" % cell, format="pdf")
         plt.figure()
     # DipRate###
     plt.subplot(3, 3, cell%3*3+1)
-    plt.title("linear_tc")
+    # plt.title("linear_tc")
     plt.plot(ts/3600, np.exp(ts * K_Div), label="Kprolif = %g" % K_Div)
     for k in Kprolif:
         plt.plot(ts/3600, np.exp(ts * k), label="Kprolif = %g" % k)
@@ -194,12 +195,12 @@ for cell_line in Cell_key:
     #plt.legend(loc="best")
 
     plt.subplot(3, 3, cell%3*3+2)
-    plt.title("log_tc")
+    #plt.title("log_tc")
     plt.plot(ts/3600,np.log2(np.exp(ts * K_Div)), label="Kprolif = %g" % K_Div)
     for k in Kprolif:
         plt.plot(ts/3600, np.log2(np.exp(ts*k)), label="Kprolif = %g" % k)
     plt.xlabel('time (hr)')
-    plt.ylabel('cell count')
+    plt.ylabel(r'log$_2$ cell count')
     #plt.legend(loc="best")
 
     #plt.yscale("log", base=2)
@@ -255,6 +256,8 @@ for cell_line in Cell_key:
 
     plt.xlabel(r'log$_{10}$ conc')
     plt.ylabel("relative effect")
+
+    plt.tight_layout()
 
     #plt.show()############################################################################################################################
     #plt.savefig
@@ -381,6 +384,10 @@ plt.plot(np.linspace(0, 18, 18),CellAA,"o", lw = 2, label="AA")
 plt.xlabel('cell line doubling time')
 plt.ylabel('value')
 plt.legend(loc="best")
+
+plt.savefig("AA_Dict.pdf",format="pdf")
+
+
 plt.figure()
 plt.title("IC_50")
 plt.plot(np.linspace(0, 18, 18),np.log10(vCellIC),"o", lw = 2, label="vIC")
@@ -388,6 +395,8 @@ plt.plot(np.linspace(0, 18, 18),np.log10(CellIC),"o", lw = 2, label="IC")
 plt.xlabel('cell line doubling time')
 plt.ylabel('log_10 value')
 plt.legend(loc="best")
+
+plt.savefig("IC_Dict.pdf",format="pdf")
 
 plt.figure()
 plt.title("Activity Area")
@@ -400,6 +409,10 @@ plt.plot(Cell_div_times,CellAA,"o", lw = 2, label="AA")
 plt.xlabel('cell line doubling time')
 plt.ylabel('value')
 plt.legend(loc="best")
+
+plt.savefig("AA_Cell_double.pdf",format="pdf")
+
+
 plt.figure()
 plt.title("IC_50")
 plt.plot(Cell_div_times,np.log10(vCellIC),"o", lw = 2, label="vIC")
@@ -407,6 +420,10 @@ plt.plot(Cell_div_times,np.log10(CellIC),"o", lw = 2, label="IC")
 plt.xlabel('cell line doubling time')
 plt.ylabel('log_10 value')
 plt.legend(loc="best")
+
+plt.savefig("IC_Cell_double.pdf",format="pdf")
+
+
 
 plt.figure()
 
@@ -417,6 +434,6 @@ plt.plot(Cell_div_times,np.log10(CellIC)-np.log10(CellIC[0]),"o", lw = 2, label=
 plt.xlabel('cell line')
 plt.ylabel('change in value')
 plt.legend(loc="best")
-
+plt.savefig("relative_changes.pdf",format="pdf")
 
 plt.show()
