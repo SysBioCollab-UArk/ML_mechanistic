@@ -11,6 +11,7 @@ import math
 from scipy.optimize import curve_fit
 import os
 import read_data
+import json
 from copy import deepcopy
 from read_data import get_k_div
 
@@ -38,7 +39,7 @@ gene_map = {
 
 Cell_div_times=list(read_data.get_k_div("data/doubling_times.csv").values())
 Cell_key=list(read_data.get_k_div("data/doubling_times.csv").keys())
-
+Cell_div_times =  [x * 10 for x in Cell_div_times]
 print(Cell_key)
 print(Cell_div_times)
 #quit()
@@ -68,17 +69,13 @@ for cell_line in Cell_key:
             print(amount)
             #quit()
 
+    #print(Cell_div_times)
+    #Cell_div_times=np.array([0.2,0.13524823035316005,0.0009973340727481227, 0.01933464938800405, 0.015322684707684294, 0.009560650766344074,0.024755256448569473,0.017503716680806698,0.0204669443078724,0.016681350442654508,0.021061901566695386,0.02161132344294155,0.016675553662228032 ,0.013119504994825462,0.011375500775053806,0.011108127893588867,0.015576341136178546,0.018216745875425634])
 
 
+    #print(Cell_div_times)
 
-
-
-
-
-
-    #Cell_div_times=np.array([0.02469112365984261,0.013524823035316005,0.009973340727481227, 0.01933464938800405, 0.015322684707684294, 0.009560650766344074,0.024755256448569473,0.017503716680806698,0.0204669443078724,0.016681350442654508,0.021061901566695386,0.02161132344294155,0.016675553662228032 ,0.013119504994825462,0.011375500775053806,0.011108127893588867,0.015576341136178546,0.018216745875425634])
-
-
+    #quit()
     sim = ScipyOdeSimulator(model, ts)
 
 
@@ -91,7 +88,7 @@ for cell_line in Cell_key:
     TTD = [0]*n
     ProbL = [0]*n
     Start = 10**np.linspace(-15, 8, n)
-    K_Div = Cell_div_times[cell]/3600
+    K_Div = Cell_div_times[cell]/3600    # time units 1/seconds
     #quit()
 
 
@@ -180,10 +177,16 @@ for cell_line in Cell_key:
         Count += 1
 
     print("ProbL of Life =", ProbL)
-    print("Kprolif =", Kprolif)
+    print("Kprolif =", np.array(Kprolif))
+    print("Dip =", np.array(Kprolif)/np.log(2)*3600)
+    #for k in Kprolif:
+      #  plt.plot(ts / 3600, np.log2(np.exp(ts * k)), label="Kprolif = %g" % k)
+
+
     if cell % 3 == 0:
-        plt.savefig("Viability_Dip_%d.pdf" % cell, format="pdf")
         plt.figure()
+        plt.savefig("Viability_Dip_%d.pdf" % cell, format="pdf")
+
     # DipRate###
     plt.subplot(3, 3, cell%3*3+1)
     # plt.title("linear_tc")
@@ -206,14 +209,20 @@ for cell_line in Cell_key:
     #plt.yscale("log", base=2)
 
     plt.subplot(3,3, cell%3*3+3)
-    Dip = np.array(Kprolif)/np.log(2)
+    Dip = np.array(Kprolif)/np.log(2)*3600      # units of 1/hour
     LogConc = np.log10(np.array(Start))
 
-    Direct = Dip/(K_Div/np.log(2))
-    Scaled = (Direct-np.min(Direct))/(np.max(Direct)-np.min(Direct))
+
+
+    Dip0=K_Div*3600/np.log(2)
+    DipMax=np.min(Dip)
+
+    Scaled=(Dip-DipMax)/(Dip0-DipMax)
+    Direct = Dip
+    Response = Dip/Dip0
 
     #plt.plot(LogConc, Direct, "o", lw=2)
-    plt.plot(LogConc, Scaled, "o", lw=2, label="dip_rate")
+    plt.plot(LogConc, Response, "o", lw=2, label="dip_rate")
 
 
     # DipRate###
@@ -226,25 +235,24 @@ for cell_line in Cell_key:
 
 
 
-
     # CurveFit###     #of dip rate
 
 
     def func(x, emax, ec, h):
-        e0 = 1
-        return emax + (e0 - emax)/(1+(10**x/ec)**h)
+        eo = 1
+        return emax + (eo - emax)/(1+(10**x/ec)**h)
 
     #this is the dip rate dose response fit
-    popt, pcov = curve_fit(func, LogConc, Dip/(K_Div/np.log(2)), maxfev=50000)
+    popt, pcov = curve_fit(func, LogConc, Response, maxfev=50000)
     Emax = popt[0]
     EC = popt[1]
     h = popt[2]
     Eo = 1
-    #Ei = Emax + (Eo - Emax)/(1+(10**LogConc/EC)**h)            #direct effect
-    Ei = (EC**h)/(EC**h+(10**LogConc)**h)                       #scaled
+    Ei = Emax/Eo + (Eo - Emax)/(Eo*(1+(10**LogConc/EC)**h))           #direct effect
+    #Ei = (EC**h)/(EC**h+(10**LogConc)**h)                       #scaled
     plt.plot(LogConc, Ei, "-", lw = 2)
 
-
+    print(cell)
     # this is the viability dose response fit
     popt, pcov = curve_fit(func, LogConc, viability, maxfev=500000)
     vEmax = popt[0]
@@ -258,6 +266,9 @@ for cell_line in Cell_key:
     plt.ylabel("relative effect")
 
     plt.tight_layout()
+
+    #plt.show()
+    #quit()
 
     #plt.show()############################################################################################################################
     #plt.savefig
@@ -355,6 +366,9 @@ for cell_line in Cell_key:
 
     vCellAA[cell]=vAA
     vCellIC[cell]=vIC
+
+
+
     #plt.show()
     #quit()#########################################################################
 
@@ -372,6 +386,31 @@ vCellAA = np.array(vCellAA)
 vCellIC = np.array(vCellIC)
 CellAA = np.array(CellAA)
 CellIC = np.array(CellIC)
+
+dictionary = {Cell_key[i]:[Cell_div_times[i], vCellAA[i], CellAA[i], vCellIC[i], CellIC[i]] for i in range(len(Cell_key))}
+#All_data = dict(zip(Cell_key, zip(Cell_div_times, zip(vCellAA, zip(CellAA, zip(vCellIC, CellIC))))))
+#print("All_data is", All_data)
+print(dictionary)
+
+
+
+# write data to a file
+with open('dictionary.json', 'w') as fp:
+    json.dump(dictionary, fp)
+
+# read data from a file
+with open('dictionary.json', 'r') as fp:
+    data = json.load(fp)
+
+print(data)
+# Output: {1: [4, 7, 10, 13], 2: [5, 8, 11, 14], 3: [6, 9, 12, 15]}
+
+
+
+
+
+#All_datas =All_data.sort(key=All_data[2])
+#print("All_datas is", All_datas)
 
 plt.figure()
 plt.title("Activity Area")
