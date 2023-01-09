@@ -40,8 +40,8 @@ gene_map = {
 Cell_div_times=list(read_data.get_k_div("data/doubling_times.csv").values())
 Cell_key=list(read_data.get_k_div("data/doubling_times.csv").keys())
 Cell_div_times =  [x * 10 for x in Cell_div_times]
-print(Cell_key)
-print(Cell_div_times)
+print(np.array(Cell_key))
+print(np.array(Cell_div_times))
 #quit()
 
 CellAA = [0]*len(Cell_div_times)
@@ -54,6 +54,7 @@ cell = 0
 # loop over all cell lines
 for cell_line in Cell_key:
     print(cell_line)
+
     # print(t_div[cell_line])
 
     # set initial concentrations for each protein
@@ -189,12 +190,13 @@ for cell_line in Cell_key:
 
     # DipRate###
     plt.subplot(3, 3, cell%3*3+1)
-    # plt.title("linear_tc")
+    plt.title(cell_line)
     plt.plot(ts/3600, np.exp(ts * K_Div), label="Kprolif = %g" % K_Div)
     for k in Kprolif:
         plt.plot(ts/3600, np.exp(ts * k), label="Kprolif = %g" % k)
     plt.xlabel('time (hr)')
     plt.ylabel('cell count')
+
     #plt.legend(loc="best")
 
     plt.subplot(3, 3, cell%3*3+2)

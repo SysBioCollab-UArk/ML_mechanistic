@@ -28,23 +28,30 @@ vIC= [x[3] for x in dictionary.values()]
 
 
 
-dictionary = {k: v for k, v in zip(IC, vIC)}
+dictionary = {k: v for k, v in zip(AA, vAA)}
 sorted_dictionary = {k: v for k, v in sorted(dictionary.items(), key=lambda item: item[0])}
 
-print(sorted_dictionary)
+dictionaryA = {k: v for k, v in zip(data.keys(), AA)}
+sorted_dictionaryA = {k: v for k, v in sorted(dictionaryA.items(), key=lambda item: item[1])}
+print(sorted_dictionaryA)
 
+print(sorted_dictionary)
+print(sorted_dictionaryA.keys())
 
 
 
 
 #x_values = list(dictionary.keys())
-space = len(list(sorted_dictionary.keys()))
-x_values = np.linspace(0,space,space)
+space = len(list(sorted_dictionaryA.keys()))
+print(space)
+#x_values = np.linspace(0,space+.5,space)
+x_values = np.arange(0,space,1)
 y_valuesA = list(sorted_dictionary.keys())
 y_valuesB = list(sorted_dictionary.values())
-plt.plot(x_values, y_valuesA,"o", lw = 2, label="vAA")
-plt.plot(x_values, y_valuesB,"o", lw = 2, label="AA")
+plt.plot(x_values, y_valuesA,"o", lw = 2, label="AA")
+plt.plot(x_values, y_valuesB,"o", lw = 2, label="vAA")
 plt.legend(loc="best")
+plt.xticks(x_values, list(sorted_dictionaryA.keys()))
 
 plt.show()
 
