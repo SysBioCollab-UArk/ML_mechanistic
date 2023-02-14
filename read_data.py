@@ -15,6 +15,7 @@ def get_gene_expr(infile, cell_line):
         ratio[gene] = val if val >= 0.0 else -1/val
     return ratio
 
+
 def get_k_div(infile):
 
     # read in doubling times
