@@ -10,12 +10,18 @@ df = df.rename(
     index={0: 'Dt', 1: 'vAA', 2: 'AA', 3: 'vIC', 4: 'IC', 5: 'Name'}
 )
 
+#df = df[['Name', 'vIC']]
+
+
+
 print(df)
 print(df.T)
 dfA = df.T
 
 print(dfA)
+dfA = dfA[[ 'vAA']]
 dfA = dfA.sort_values(by=['vAA'])
+
 sns.heatmap(dfA)
 #plt.figure()
 

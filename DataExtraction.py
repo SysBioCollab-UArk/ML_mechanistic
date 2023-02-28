@@ -31,9 +31,13 @@ s = 0
 # enter for so, 1 for viability to be driven to zero
 so = 1
 # enter for Dname, the drug name
-# Dname = "NAVITOCLAX"
+
 # Dname = "DOCETAXEL"
 Dname = "RTRAIL"
+
+#Dname = "NAVITOCLAX"
+#Dname = "OBATOCLAX"
+#Dname = "TW-37"
 
 name = pd.read_csv("data/doubling_times.csv")
 
@@ -59,7 +63,15 @@ print(values_list)
 
 # making data frame from csv file
 data = pd.read_csv("data/sanger-viability.csv")
+print(data.columns)
 data = data[['DRUG_NAME', 'DRUG_ID', 'COSMIC_ID', 'dose', 'viability', 'DATASET', 'ARXSPAN_ID']]
+
+
+
+
+quit()
+
+
 
 for CellKeyNum in range(18):
 
