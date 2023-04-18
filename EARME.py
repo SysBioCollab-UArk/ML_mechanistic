@@ -15,6 +15,42 @@ import json
 from copy import deepcopy
 from read_data import get_k_div
 
+print(model.observables)
+
+print(model.parameters)
+#quit()
+
+
+
+
+
+
+tspan = np.linspace(0,72*3600,1001)
+
+
+sim=ScipyOdeSimulator(model,tspan,verbose=True)
+#for l_0 in [0.1,0.5,1]:
+
+   # result= sim.run(param_values={'L_0': l_0})
+
+
+  #  plt.plot(tspan/3600,result.observables['CPARP_total'],lw=2,label='L_0 = %g' % l_0)
+
+#plt.xlabel('time (hr)')
+#plt.ylabel('molecule count')
+#plt.legend(loc=0)
+
+
+
+#plt.show()
+
+
+
+
+#quit()
+
+
+
 # dictionary to map gene names in initial concentrations
 gene_map = {
     'BAX': ['Bax_0'],
@@ -39,7 +75,7 @@ gene_map = {
 
 Cell_div_times=list(read_data.get_k_div("data/doubling_times.csv").values())
 Cell_key=list(read_data.get_k_div("data/doubling_times.csv").keys())
-Cell_div_times =  [x * 10 for x in Cell_div_times]
+Cell_div_times =  [x*4  for x in Cell_div_times]
 print(np.array(Cell_key))
 print(np.array(Cell_div_times))
 #quit()
@@ -52,8 +88,7 @@ ts = np.linspace(0, 72*60*60, 1001)
 cell = 0
 
 # loop over all cell lines
-for cell_line in Cell_key:
-    print(cell_line)
+for cell_line in ["HeLa"]:   #["HeLa"]:    Cell_key:   ["AN3-CA"]:
 
     # print(t_div[cell_line])
 
@@ -83,18 +118,21 @@ for cell_line in Cell_key:
     #print (model.observables)
 
 
-    n = 30
+    n = 30                              #30
 
     Kprolif = [0]*n
     TTD = [0]*n
     ProbL = [0]*n
-    Start = 10**np.linspace(-15, 8, n)
+    Start = 10**np.linspace(1, 8, n)         #10**np.linspace(-15, 8, n)
     K_Div = Cell_div_times[cell]/3600    # time units 1/seconds
     #quit()
 
 
     Count = 0
     print(Start)
+
+    fig, ax1 = plt.subplots()
+    ax2 = ax1.twinx()
 
 
     while Count < n:
@@ -140,8 +178,8 @@ for cell_line in Cell_key:
         # print("TODF", TODF)
         # print("TODT", TODT)
         # print("D", D)
-        TOD = D * 200
-        print("TOD", TOD)
+        #TOD = D * 200                             #* 200
+        #print("TOD", TOD)
 
         Ya = D
         Yb = D + 1
@@ -151,7 +189,7 @@ for cell_line in Cell_key:
         Y = 1
         Y = Ya + (X - Xa) * ((Yb - Ya) / (Xb - Xa))
         print("Y =", Y)
-        TOD = Y * 200
+        TOD = Y * 259.2 * 5
 
         ########################################################################################################
 
@@ -163,6 +201,33 @@ for cell_line in Cell_key:
         ##############################################################################################################
 
         Prob = 1-np.exp(-K_Div*Death)
+
+
+
+
+        ax1.plot(ts / 3600, traj.observables["CPARP_total"], color="0.5")
+        ax1.set_xlabel('time (h)')
+        ax1.set_ylabel('concentration')
+        if Count == 0 :
+            times = []
+            probs = []
+            for i in range(len(ts) - 1):
+                times.append(0.5 * (ts[i] + ts[i + 1]))
+                probs.append(1 - np.exp(-K_Div * times[-1]))
+            ax2.plot(np.array(times) / 3600, probs, lw=2)
+
+            ax2.set_ylabel('probability')
+        plt.tight_layout()
+
+
+
+
+
+
+
+
+
+
 
         if TODT == 0:            # if Cparp does not reach 50% there is 100% prob of life
             print("WARNING: CPARP did not reach 50% of maximum")
@@ -183,12 +248,16 @@ for cell_line in Cell_key:
     #for k in Kprolif:
       #  plt.plot(ts / 3600, np.log2(np.exp(ts * k)), label="Kprolif = %g" % k)
 
+    plt.show()
+    quit()
+
+
 
     if cell % 3 == 0:
         plt.figure()
         plt.savefig("Viability_Dip_%d.pdf" % cell, format="pdf")
 
-    # DipRate###
+   # DipRate###
     plt.subplot(3, 3, cell%3*3+1)
     plt.title(cell_line)
     plt.plot(ts/3600, np.exp(ts * K_Div), label="Kprolif = %g" % K_Div)
@@ -224,9 +293,9 @@ for cell_line in Cell_key:
     Response = Dip/Dip0
 
     #plt.plot(LogConc, Direct, "o", lw=2)
-    plt.plot(LogConc, Response, "o", lw=2, label="dip_rate")
+    ##plt.plot(LogConc, Response, "o", lw=2, label="dip_rate")
 
-
+    #####################plt.figure()
     # DipRate###
 
     # Viability
@@ -252,7 +321,7 @@ for cell_line in Cell_key:
     Eo = 1
     Ei = Emax/Eo + (Eo - Emax)/(Eo*(1+(10**LogConc/EC)**h))           #direct effect
     #Ei = (EC**h)/(EC**h+(10**LogConc)**h)                       #scaled
-    plt.plot(LogConc, Ei, "-", lw = 2)
+    #plt.plot(LogConc, Ei, "-", lw = 2)
 
     print(cell)
     # this is the viability dose response fit
@@ -366,7 +435,7 @@ for cell_line in Cell_key:
     #print (AUCA)
     #plt.show()
 
-    vCellAA[cell]=vAA
+    vCellAA[cell]=vAUC
     vCellIC[cell]=vIC
 
 

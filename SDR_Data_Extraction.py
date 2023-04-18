@@ -74,7 +74,13 @@ data = data[['DRUG_NAME', 'DRUG_ID', 'COSMIC_ID', 'DATASET', 'ARXSPAN_ID',
 
 
 ]]
+data = data[['DRUG_NAME', 'DRUG_ID','DATASET', 'ARXSPAN_ID',
+             'IC50_PUBLISHED','AUC_PUBLISHED'
 
+
+
+
+]]
 #
 
 
@@ -103,6 +109,13 @@ print("start",Drug,"end")
 
 Drug.to_csv('my_data.csv', index=False)
 
+Drug = Drug.sort_values(by=['AUC_PUBLISHED'])
+sns.heatmap(Drug.pivot_table(values='AUC_PUBLISHED', index='ARXSPAN_ID'))
+
+plt.show()
+
+
+quit()
 Drug = Drug[[ 'ARXSPAN_ID',
              'AUC_PUBLISHED','mse']]
 
