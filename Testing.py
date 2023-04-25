@@ -77,7 +77,7 @@ vCellIC = [0] * len(Cell_div_times)
 ts = np.linspace(0, 72 * 60 * 60, 1001)
 cell = 0
 p = 0
-fig, ax1 = plt.subplots(3,6)
+fig, ax1 = plt.subplots(3,6,sharex='all',sharey="all")
 
 
 
@@ -85,7 +85,10 @@ fig, ax1 = plt.subplots(3,6)
 # loop over all cell lines
 for cell_line in Cell_key:  # ["HeLa"]:    Cell_key:   ["AN3-CA"]:
     print(p//6,p%6)
-    ax2 = ax1[p//6,p%6].twinx()
+    ax2 = ax1[p//6,p%6]
+
+    #ax2.get_shared_y_axes().join(ax1, ax2)
+
     # print(t_div[cell_line])
 
     # set initial concentrations for each protein
@@ -111,12 +114,13 @@ for cell_line in Cell_key:  # ["HeLa"]:    Cell_key:   ["AN3-CA"]:
 
     # print (model.observables)
 
-    n = 30  # 30
+    n = 30
+    # 30
 
     Kprolif = [0] * n
     TTD = [0] * n
     ProbL = [0] * n
-    Start = 10 ** np.linspace(1, 8, n)  # 10**np.linspace(-15, 8, n)
+    Start = 10 ** np.linspace(-1, 8, n)  # 10**np.linspace(-15, 8, n)
     K_Div = Cell_div_times[cell] / 3600  # time units 1/seconds
     # quit()
 
@@ -136,7 +140,7 @@ for cell_line in Cell_key:  # ["HeLa"]:    Cell_key:   ["AN3-CA"]:
         print("start count", Start[Count])
         print(initials)
 
-        traj = sim.run(initials=initials)
+        traj = sim.run(initials=initials, param_values={'kc8': 0})
 
         TODT = 0
 
@@ -192,9 +196,9 @@ for cell_line in Cell_key:  # ["HeLa"]:    Cell_key:   ["AN3-CA"]:
 
         # plt.subplot(3, 3, cell % 3 * 3 + 1)
         # plt.title(cell_line)
-
-        ax1[p//6,p%6].plot(ts / 3600, traj.observables["CPARP_total"], color="0.5")
-
+        max_CPARP=np.max(traj.observables["CPARP_total"])
+        ax1[p//6,p%6].plot(ts / 3600, traj.observables["CPARP_total"]/max_CPARP, color="0.5")
+        ax1[p//6,p%6].set_xticks([0, 24, 48, 72])
         ax1[p//6,p%6].set_title(cell_line)
         if Count == 0:
             times = []
@@ -227,9 +231,21 @@ for cell_line in Cell_key:  # ["HeLa"]:    Cell_key:   ["AN3-CA"]:
     #  plt.plot(ts / 3600, np.log2(np.exp(ts * k)), label="Kprolif = %g" % k)
 
     p = p + 1
-ax2.set_ylabel('probability')
-ax1[2,0].set_xlabel('time (h)')
-ax1[0,0].set_ylabel('concentration')
 
-fig.tight_layout()
+#ax2.set_ylabel('probability')
+
+ax1[2,0].set_xlabel('time (h)')
+ax1[2,1].set_xlabel('time (h)')
+ax1[2,2].set_xlabel('time (h)')
+ax1[2,3].set_xlabel('time (h)')
+ax1[2,4].set_xlabel('time (h)')
+ax1[2,5].set_xlabel('time (h)')
+
+
+
+ax1[0,0].set_ylabel('concentration/Probability')
+ax1[1,0].set_ylabel('concentration/Probability')
+ax1[2,0].set_ylabel('concentration/Probability')
+
+plt.tight_layout(pad=0)
 plt.show()

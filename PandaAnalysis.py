@@ -18,15 +18,15 @@ print(df)
 print(df.T)
 dfA = df.T
 
-dfA=dfA.drop(index=('CAPAN-2'))
-dfA=dfA.drop(index=('EFO-21'))
-dfA=dfA.drop(index=('RPMI-8226'))
+#dfA=dfA.drop(index=('CAPAN-2'))
+#dfA=dfA.drop(index=('EFO-21'))
+#dfA=dfA.drop(index=('RPMI-8226'))
 
 
 
 print(dfA)
-dfA = dfA[[ 'AA']]
-dfA = dfA.sort_values(by=['AA'])
+dfA = dfA[[ 'vIC']]
+dfA = dfA.sort_values(by=['vIC'])
 print(dfA)
 sns.heatmap(dfA)
 #plt.figure()

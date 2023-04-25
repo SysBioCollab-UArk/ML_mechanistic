@@ -88,7 +88,7 @@ ts = np.linspace(0, 72*60*60, 1001)
 cell = 0
 
 # loop over all cell lines
-for cell_line in ["HeLa"]:   #["HeLa"]:    Cell_key:   ["AN3-CA"]:
+for cell_line in Cell_key:   #["HeLa"]:    Cell_key:   ["AN3-CA"]:
 
     # print(t_div[cell_line])
 
@@ -118,7 +118,7 @@ for cell_line in ["HeLa"]:   #["HeLa"]:    Cell_key:   ["AN3-CA"]:
     #print (model.observables)
 
 
-    n = 30                              #30
+    n = 30                             #30
 
     Kprolif = [0]*n
     TTD = [0]*n
@@ -149,7 +149,7 @@ for cell_line in ["HeLa"]:   #["HeLa"]:    Cell_key:   ["AN3-CA"]:
         print(initials)
 
         traj = sim.run(initials= initials)
-
+        traj = sim.run(initials=initials, param_values={'kc8': 0})
         TODT = 0
 
         #print(Start)
@@ -248,8 +248,8 @@ for cell_line in ["HeLa"]:   #["HeLa"]:    Cell_key:   ["AN3-CA"]:
     #for k in Kprolif:
       #  plt.plot(ts / 3600, np.log2(np.exp(ts * k)), label="Kprolif = %g" % k)
 
-    plt.show()
-    quit()
+    #plt.show()
+    #quit()
 
 
 
